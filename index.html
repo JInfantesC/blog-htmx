@@ -1,0 +1,30 @@
+<html>
+<head>
+    <title>htmx - high power tools for html</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <button hx-post="./posts/post_1"
+         hx-trigger="click"
+         hx-target="#article"
+         hx-swap="innerHTML">
+        Articulo 1
+    </button>
+    <button hx-post="./posts/post_2"
+            hx-trigger="click"
+            hx-target="#article"
+            hx-swap="innerHTML">
+        Articulo 2
+    </button>
+    <button hx-post="./posts/post_3"
+            hx-trigger="click"
+            hx-target="#article"
+            hx-swap="innerHTML">
+        Articulo 3
+    </button>
+    <div id="article">
+        Articulo default
+    </div>
+    <script src="./static/htmx.min.js"></script>
+</body>
+</html>
