@@ -1,0 +1,23 @@
+<html>
+<head>
+    <title>blog-htmx - Made with Go & htmx</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        div{
+            padding:0em 1em;
+            border-left:1px solid black;
+        }
+    </style>
+</head>
+<body>
+<h1>Blog-HTMX</h1>
+<button hx-post="./pages/"
+        hx-trigger="click"
+        hx-target="#content_0"
+        hx-swap="innerHTML">
+    Pages
+</button>
+<div id="content_0">Main content</div>
+<script src="./static/htmx.min.js"></script>
+</body>
+</html>

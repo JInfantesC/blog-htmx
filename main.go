@@ -10,8 +10,15 @@ import (
 func main() {
 	tree := GeneratePagesTree("pages")
 
-	HandleFunc("/about", aboutEndpointHandler)
-
+	HandlePage(&pageFile{
+		page: page{
+			route:   "index.html",
+			isType:  PAGE,
+			webName: "/",
+			data:    nil,
+		},
+		extension: ".html",
+	})
 	HandleTree(&tree)
 
 	fs := http.FileServer(http.Dir("static/"))
@@ -21,8 +28,4 @@ func main() {
 	fmt.Printf("routes: %v\n", v.FieldByName("m"))
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
-}
-func aboutEndpointHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "This is the about page, ")
-	fmt.Fprintf(w, "where you can find information about us.")
 }
