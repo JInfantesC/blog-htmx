@@ -1,26 +1,26 @@
 <html>
 <head>
-    <title>htmx - high power tools for html</title>
+    <title>blog-htmx - Made with Go & htmx</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
-    <button hx-post="./posts/post_1"
+    <button hx-post="posts/post_1"
          hx-trigger="click"
          hx-target="#article"
          hx-swap="innerHTML">
-        Articulo 1
+        Post 1
     </button>
-    <button hx-post="./posts/post_2"
+    <button hx-post="posts/post_2"
             hx-trigger="click"
             hx-target="#article"
             hx-swap="innerHTML">
-        Articulo 2
+        Post 2
     </button>
-    <button hx-post="./posts/post_3"
+    <button hx-post="guides/guide_1"
             hx-trigger="click"
             hx-target="#article"
             hx-swap="innerHTML">
-        Articulo 3
+        Guide 3
     </button>
     <div id="article">
         Articulo default

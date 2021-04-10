@@ -101,7 +101,7 @@ func HandleTree(dir *pageDir) {
 }
 
 func HandlePage(p *pageFile) {
-	http.HandleFunc(
+	HandleFunc(
 		p.webName, func(w http.ResponseWriter, r *http.Request) {
 			if p.data == nil {
 				data, err := ioutil.ReadFile(p.GetRoute())
@@ -109,7 +109,7 @@ func HandlePage(p *pageFile) {
 					fmt.Fprintln(w, "File reading error", err)
 					return
 				}
-				if p.extension == "md" {
+				if p.extension == ".md" {
 					p.data = blackfriday.Run(data)
 				} else {
 					p.data = data
