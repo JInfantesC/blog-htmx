@@ -128,7 +128,7 @@ func HandleDir(dir *pageDir) {
 	HandleFunc(
 		"/"+dir.route+"/", func(w http.ResponseWriter, r *http.Request) {
 			if dir.data == nil {
-				t, err := template.New("list").Parse(`<h3>{{ .Base }}</h3>
+				t, err := template.New("list").Parse(`<section class="content"><h3>{{ .Base }}</h3>
 					{{range .DirList}}
 						<button hx-post="{{ .Route }}"
 								hx-trigger="click"
@@ -136,7 +136,7 @@ func HandleDir(dir *pageDir) {
 								hx-swap="innerHTML">
 							{{.Base}}
 						</button>
-						<div id="content_{{ .HtmlId }}"></div>
+						<article id="content_{{ .HtmlId }}" class="card"></article>
 					{{end}}
 					{{range .PagesList}}
 						<button hx-post="{{ .WebName }}"
@@ -145,8 +145,9 @@ func HandleDir(dir *pageDir) {
 								hx-swap="innerHTML">
 							{{.Base}}
 						</button>
-						<div id="content_{{ .HtmlId }}"></div>
-					{{end}}`)
+						<article id="content_{{ .HtmlId }}" class="card"></article>
+					{{end}}
+					</section>`)
 				if err != nil {
 					panic(err)
 				}
