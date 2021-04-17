@@ -53,3 +53,9 @@ func HandleFunc(pattern string, handler http.HandlerFunc) {
 	}
 	http.Handle(pattern, allMiddlewares(handler))
 }
+func Handle(pattern string, handler http.Handler) {
+	if allMiddlewares == nil {
+		allMiddlewares = nestedMiddleware(withLogging)
+	}
+	http.Handle(pattern, allMiddlewares(handler.ServeHTTP))
+}

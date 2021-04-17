@@ -27,10 +27,7 @@ func main() {
 	HandleDirectory(&pagesDir)
 
 	fs := http.FileServer(http.Dir("static/"))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
-
-	//v := reflect.ValueOf(http.DefaultServeMux).Elem()
-	//fmt.Printf("routes: %v\n", v.FieldByName("m"))
+	Handle("/static/", http.StripPrefix("/static/", fs))
 
 	log.Println("http://localhost:8080/")
 	log.Fatal(http.ListenAndServe(":8080", nil))
