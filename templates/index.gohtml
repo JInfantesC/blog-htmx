@@ -1,20 +1,24 @@
 {{- /*gotype: blog-htmx.Page*/ -}}
 {{ define "directory" }}
-    {{range .SubPages}}
+    <div>
+        <span class="label">{{.GetFileName}}</span>
         <div>
-            {{if (eq .GetType 0)}}
-                <button hx-get="{{.GetRoute}}"
-                        hx-trigger="click"
-                        hx-target="#content"
-                        hx-swap="innerHTML">
-                    {{.GetRoute}}
-                </button>
-            {{end}}
-            {{if (eq .GetType 1)}}
-                {{ template "directory" . }}
+            {{range .SubPages}}
+                {{if (eq .GetType 0)}}
+                    <button class="pseudo"
+                            hx-get="{{.GetRoute}}"
+                            hx-trigger="click"
+                            hx-target="#content"
+                            hx-swap="innerHTML">
+                        {{.GetFileName}}
+                    </button>
+                {{end}}
+                {{if (eq .GetType 1)}}
+                    {{ template "directory" . }}
+                {{end}}
             {{end}}
         </div>
-    {{end}}
+    </div>
 {{ end }}
 <!DOCTYPE html>
 <html>
@@ -30,9 +34,12 @@
             margin: auto;
         }
 
-        main article#content {
-            border: 1px solid black;
-            border-radius: 4px;
+        aside div {
+            padding-left: 0.3em;
+        }
+
+        aside label {
+
         }
     </style>
 </head>
@@ -40,11 +47,8 @@
 <main>
     <h1>Blog-HTMX</h1>
     <section class="flex five">
-        <aside class="">
-            <h2>{{ . }}</h2>
-            <div class="flex">
-                {{ template "directory" . }}
-            </div>
+        <aside class="card">
+            {{ template "directory" . }}
         </aside>
 
         <article class="card four-fifth" id="content">
