@@ -1,10 +1,4 @@
-# Titulo de post 1.
+# Entrada 1 en carpeta Posts
 
-Contenido en un parrafo.
+Contenido en markdown que será parseado en html por la librería blackfriday https://github.com/russross/blackfriday 
 
-- Que 
-- tal
-- una 
-- lista
-
-**negrita!**
