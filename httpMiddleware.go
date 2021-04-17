@@ -41,10 +41,13 @@ func nestedMiddleware(mw ...middleware) middleware {
 }
 
 // Código propio
+
+// allMiddlewares es el resultado de ejecutad nestedMiddleware una vez.
+//Contiene todos los middleware a ejecutar antes de handler recibido en HandleFunc
 var allMiddlewares middleware
 
-/*Esta función ejecutará todos los middleware antes del handler recibido*/
-func HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request)) {
+// HandleFunc Esta función ejecutará todos los middleware antes del handler recibido
+func HandleFunc(pattern string, handler http.HandlerFunc) {
 	if allMiddlewares == nil {
 		allMiddlewares = nestedMiddleware(withLogging)
 	}

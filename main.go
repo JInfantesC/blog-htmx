@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"reflect"
 )
 
 func main() {
@@ -14,22 +15,23 @@ func main() {
 		log.Panicln(err)
 	}
 	verbosePrintPage(os.Stdout, &pagesDir)
-	/*HandlePage(&pageFile{
-		page: page{
-			route:   "index.html",
-			isType:  PAGE,
-			webName: "/",
-			data:    loadTemplate("templates/index.gohtml", pagesDir),
-		},
-		extension: ".html",
+
+	HandlePage(&Page{
+		webPath:  "/",
+		filePath: "index.html",
+		isType:   PAGE,
 	})
-	HandleTree(&tree)*/
+	HandleDirectory(&pagesDir)
 
 	fs := http.FileServer(http.Dir("static/"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
+	v := reflect.ValueOf(http.DefaultServeMux).Elem()
+	fmt.Printf("routes: %v\n", v.FieldByName("m"))
+
 	log.Println("http://localhost:8080/")
 	log.Fatal(http.ListenAndServe(":8080", nil))
+
 }
 
 /*

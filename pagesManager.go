@@ -3,8 +3,11 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/russross/blackfriday/v2"
 	"io/fs"
 	"io/ioutil"
+	"log"
+	"net/http"
 	"path/filepath"
 	"strings"
 )
@@ -49,11 +52,11 @@ func (p Page) GetType() PageType {
 }
 func (p *Page) String() string {
 	return fmt.Sprintf(
-		"%s:\twebPath (filePath)-> %s (%s)", p.GetType(), p.webPath, p.filePath,
+		"%s\t%s\t%s", p.GetType(), p.webPath, p.filePath,
 	)
 }
 
-func (p *Page) GetSubDirectories() ([]Page, error) {
+func (p *Page) GetSubDirectories() []Page {
 	if p.isType == DIRECTORY {
 		var returnPages []Page
 		for _, subPage := range p.subPages {
@@ -61,12 +64,11 @@ func (p *Page) GetSubDirectories() ([]Page, error) {
 				returnPages = append(returnPages, subPage)
 			}
 		}
-		return returnPages, nil
-	} else {
-		return nil, errors.New(fmt.Sprintf("%s no tiene subDirectorios", p.filePath))
+		return returnPages
 	}
+	return nil
 }
-func (p *Page) GetSubPages() ([]Page, error) {
+func (p *Page) GetSubPages() []Page {
 	if p.isType == DIRECTORY {
 		var returnPages []Page
 		for _, subPage := range p.subPages {
@@ -74,10 +76,9 @@ func (p *Page) GetSubPages() ([]Page, error) {
 				returnPages = append(returnPages, subPage)
 			}
 		}
-		return returnPages, nil
-	} else {
-		return nil, errors.New(fmt.Sprintf("%s no tiene subPáginas", p.filePath))
+		return returnPages
 	}
+	return nil
 }
 
 // ReadDirectory recibe la ruta al directorio relativa a working directory y devuelve un Page
@@ -123,85 +124,59 @@ func ReadPageFile(f fs.FileInfo, dirName string) (Page, error) {
 	}
 
 	return Page{
-		webPath:  strings.TrimSuffix(dirName, filepath.Ext(dirName)),
+		webPath:  "/" + strings.TrimSuffix(dirName, filepath.Ext(dirName)),
 		filePath: dirName,
 		isType:   PAGE,
 	}, nil
 }
 
-/*
-func HandleTree(dir *pageDir) {
-	HandleDir(dir)
-	for i := 0; i < len(dir.dirList); i++ {
-		HandleTree(&dir.dirList[i])
+// HandleDirectory recorre recursivamente Page y todos los Page.
+//subPages ejecutando la función HandleFunc para servir los archivos
+func HandleDirectory(dir *Page) error {
+	if dir.isType != DIRECTORY {
+		return errors.New("imposible manejar Page. No es un directorio")
 	}
 
-	for i := 0; i < len(dir.pagesList); i++ {
-		// Con este bucle for, para recuperar la dirección de memoria correcta de pagesList[i],
-		//con el anterior reúsa &p y en pagesList con más de una pageFile siempre devuelve el último
-		HandlePage(&dir.pagesList[i])
+	// Con este bucle for, para recuperar la dirección de memoria correcta de subPages[i],
+	//con range se envía la misma dirección de memoria y todas las direcciones servirán el último
+	//Page almacenado en esa dirección
+	for i := 0; i < len(dir.subPages); i++ {
+		var err error
+		switch dir.subPages[i].isType {
+		case PAGE:
+			err = HandlePage(&dir.subPages[i])
+		case DIRECTORY:
+			err = HandleDirectory(&dir.subPages[i])
+
+		}
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
-func HandleDir(dir *pageDir) {
+func HandlePage(p *Page) error {
+	if p.isType != PAGE {
+		return errors.New("imposible manejar Page. No es una página válida")
+	}
 	HandleFunc(
-		"/"+dir.route+"/", func(w http.ResponseWriter, r *http.Request) {
-			if dir.data == nil {
-				t, err := template.New("list").Parse(
-					`<section class="content"><h3>{{ .Base }}</h3>
-					{{range .DirList}}
-						<button hx-post="{{ .Route }}"
-								hx-trigger="click"
-								hx-target="#content_{{ .HtmlId }}"
-								hx-swap="innerHTML">
-							{{.Base}}
-						</button>
-						<article id="content_{{ .HtmlId }}" class="card"></article>
-					{{end}}
-					{{range .PagesList}}
-						<button hx-post="{{ .WebName }}"
-								hx-trigger="click"
-								hx-target="#content_{{ .HtmlId }}"
-								hx-swap="innerHTML">
-							{{.Base}}
-						</button>
-						<article id="content_{{ .HtmlId }}" class="card"></article>
-					{{end}}
-					</section>`,
-				)
+		p.webPath, func(w http.ResponseWriter, r *http.Request) {
+			if p.bufferedData == nil {
+				data, err := ioutil.ReadFile(p.filePath)
 				if err != nil {
-					panic(err)
-				}
-
-				err = t.Execute(w, dir)
-				if err != nil {
-					panic(err)
-				}
-			} else {
-				w.Write(dir.data)
-			}
-
-		},
-	)
-}
-
-func HandlePage(p *pageFile) {
-	HandleFunc(
-		p.webName, func(w http.ResponseWriter, r *http.Request) {
-			if p.data == nil {
-				data, err := ioutil.ReadFile(p.Route())
-				if err != nil {
-					fmt.Fprintln(w, "File reading error", err)
+					log.Fatalf("%s error leyendo archivo", p.filePath)
 					return
 				}
-				if p.extension == ".md" {
-					p.data = blackfriday.Run(data)
+				if p.GetExtension() == ".md" {
+					p.bufferedData = blackfriday.Run(data)
 				} else {
-					p.data = data
+					p.bufferedData = data
 				}
 			}
-			w.Write(p.data)
+			w.Write(p.bufferedData)
 		},
 	)
+	return nil
 }
-*/
