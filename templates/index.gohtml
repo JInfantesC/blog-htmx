@@ -1,0 +1,61 @@
+{{- /*gotype: blog-htmx.Page*/ -}}
+{{ define "directory" }}
+    {{range .SubPages}}
+        <div>
+            {{if (eq .GetType 0)}}
+                <button hx-get="{{.GetRoute}}"
+                        hx-trigger="click"
+                        hx-target="#content"
+                        hx-swap="innerHTML">
+                    {{.GetRoute}}
+                </button>
+            {{end}}
+            {{if (eq .GetType 1)}}
+                {{ template "directory" . }}
+            {{end}}
+        </div>
+    {{end}}
+{{ end }}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>blog-htmx - Made with Go & htmx</title>
+
+    <link rel="stylesheet" href="static/picnic.css">
+    <style>
+        main {
+            max-width: 960px;
+            margin: auto;
+        }
+
+        main article#content {
+            border: 1px solid black;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+<main>
+    <h1>Blog-HTMX</h1>
+    <section class="flex five">
+        <aside class="">
+            <h2>{{ . }}</h2>
+            <div class="flex">
+                {{ template "directory" . }}
+            </div>
+        </aside>
+
+        <article class="card four-fifth" id="content">
+            Main content
+        </article>
+    </section>
+</main>
+
+<script src="static/htmx.js"></script>
+<script>
+	var tree ={{ . }}
+</script>
+</body>
+</html>

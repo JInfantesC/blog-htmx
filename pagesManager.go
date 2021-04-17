@@ -35,9 +35,12 @@ type Page struct {
 	filePath     string   // Ruta física en el sistema de archivos
 	isType       PageType // Tipo de Page
 	bufferedData []byte   // Tras primera lectura. []byte a enviar por el servidor
-	subPages     []Page   // Listado de sub páginas de este Page
+	SubPages     []Page   // Listado de sub páginas de este Page
 }
 
+func (p Page) GetRoute() string {
+	return p.webPath
+}
 func (p Page) GetExtension() string {
 	if p.GetType() == PAGE {
 		return filepath.Ext(p.GetFileName())
@@ -50,7 +53,7 @@ func (p Page) GetFileName() string {
 func (p Page) GetType() PageType {
 	return p.isType
 }
-func (p *Page) String() string {
+func (p Page) String() string {
 	return fmt.Sprintf(
 		"%s\t%s\t%s", p.GetType(), p.webPath, p.filePath,
 	)
@@ -59,7 +62,7 @@ func (p *Page) String() string {
 func (p *Page) GetSubDirectories() []Page {
 	if p.isType == DIRECTORY {
 		var returnPages []Page
-		for _, subPage := range p.subPages {
+		for _, subPage := range p.SubPages {
 			if subPage.isType == DIRECTORY {
 				returnPages = append(returnPages, subPage)
 			}
@@ -71,7 +74,7 @@ func (p *Page) GetSubDirectories() []Page {
 func (p *Page) GetSubPages() []Page {
 	if p.isType == DIRECTORY {
 		var returnPages []Page
-		for _, subPage := range p.subPages {
+		for _, subPage := range p.SubPages {
 			if subPage.isType == PAGE {
 				returnPages = append(returnPages, subPage)
 			}
@@ -90,7 +93,7 @@ func ReadDirectory(dirName string) (Page, error) {
 	}
 
 	dir := Page{
-		webPath:  dirName,
+		webPath:  "/" + dirName,
 		filePath: dirName,
 		isType:   DIRECTORY,
 	}
@@ -101,13 +104,13 @@ func ReadDirectory(dirName string) (Page, error) {
 			if errDir != nil {
 				return Page{}, errDir
 			}
-			dir.subPages = append(dir.subPages, subDir)
+			dir.SubPages = append(dir.SubPages, subDir)
 		} else {
 			subPage, errPage := ReadPageFile(file, filepath.Join(dir.filePath, file.Name()))
 			if errPage != nil {
 				return Page{}, errPage
 			}
-			dir.subPages = append(dir.subPages, subPage)
+			dir.SubPages = append(dir.SubPages, subPage)
 		}
 	}
 	return dir, nil
@@ -131,22 +134,22 @@ func ReadPageFile(f fs.FileInfo, dirName string) (Page, error) {
 }
 
 // HandleDirectory recorre recursivamente Page y todos los Page.
-//subPages ejecutando la función HandleFunc para servir los archivos
+//SubPages ejecutando la función HandleFunc para servir los archivos
 func HandleDirectory(dir *Page) error {
 	if dir.isType != DIRECTORY {
 		return errors.New("imposible manejar Page. No es un directorio")
 	}
 
-	// Con este bucle for, para recuperar la dirección de memoria correcta de subPages[i],
+	// Con este bucle for, para recuperar la dirección de memoria correcta de SubPages[i],
 	//con range se envía la misma dirección de memoria y todas las direcciones servirán el último
 	//Page almacenado en esa dirección
-	for i := 0; i < len(dir.subPages); i++ {
+	for i := 0; i < len(dir.SubPages); i++ {
 		var err error
-		switch dir.subPages[i].isType {
+		switch dir.SubPages[i].isType {
 		case PAGE:
-			err = HandlePage(&dir.subPages[i])
+			err = HandlePage(&dir.SubPages[i])
 		case DIRECTORY:
-			err = HandleDirectory(&dir.subPages[i])
+			err = HandleDirectory(&dir.SubPages[i])
 
 		}
 		if err != nil {
