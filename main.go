@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"embed"
 	"fmt"
 	"html/template"
 	"io"
@@ -9,6 +10,12 @@ import (
 	"net/http"
 	"os"
 )
+
+//go:embed static
+var static embed.FS
+
+//go:embed templates
+var templates embed.FS
 
 func main() {
 	pagesDir, err := ReadDirectory("pages")
@@ -26,8 +33,7 @@ func main() {
 	)
 	HandleDirectory(&pagesDir)
 
-	fs := http.FileServer(http.Dir("static/"))
-	Handle("/static/", http.StripPrefix("/static/", fs))
+	Handle("/static/", http.FileServer(http.FS(static)))
 
 	log.Println("http://localhost:8080/")
 	log.Fatal(http.ListenAndServe(":8080", nil))
@@ -35,7 +41,8 @@ func main() {
 }
 
 func loadTemplate(route string, data interface{}) []byte {
-	t, err := template.ParseFiles(route)
+	//t, err := template.ParseFiles(route)
+	t, err := template.ParseFS(templates, route)
 	if err != nil {
 		panic(err)
 	}
