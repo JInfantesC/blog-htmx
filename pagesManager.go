@@ -1,20 +1,25 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"github.com/russross/blackfriday/v2"
-	"html/template"
 	"io/fs"
 	"io/ioutil"
-	"log"
-	"math/rand"
-	"net/http"
 	"path/filepath"
-	"strconv"
 	"strings"
 )
 
 type PageType uint8
+
+func (pt PageType) String() string {
+	switch pt {
+	case PAGE:
+		return "Page"
+	case DIRECTORY:
+		return "Dir"
+	}
+	return "Error"
+}
 
 const (
 	PAGE PageType = iota
@@ -22,95 +27,109 @@ const (
 )
 
 /*Page baseType*/
-type page struct {
-	route   string
-	isType  PageType
-	base    string
-	webName string
-	data    []byte
-	id      string
+type Page struct {
+	webPath      string   // Ruta o pattern donde se ejecutará en el servidor
+	filePath     string   // Ruta física en el sistema de archivos
+	isType       PageType // Tipo de Page
+	bufferedData []byte   // Tras primera lectura. []byte a enviar por el servidor
+	subPages     []Page   // Listado de sub páginas de este Page
 }
 
-func (p page) WebName() string {
-	return p.webName
+func (p Page) GetExtension() string {
+	if p.GetType() == PAGE {
+		return filepath.Ext(p.GetFileName())
+	}
+	return ""
 }
-func (p page) Base() string {
-	return p.base
+func (p Page) GetFileName() string {
+	return filepath.Base(p.filePath)
 }
-func (p page) Route() string {
-	return p.route
-}
-func (p page) Type() PageType {
+func (p Page) GetType() PageType {
 	return p.isType
 }
-func (p *page) HtmlId() string {
-	if p.id == "" {
-		p.id = strconv.Itoa(int(rand.Uint32()))
+func (p *Page) String() string {
+	return fmt.Sprintf(
+		"%s:\twebPath (filePath)-> %s (%s)", p.GetType(), p.webPath, p.filePath,
+	)
+}
+
+func (p *Page) GetSubDirectories() ([]Page, error) {
+	if p.isType == DIRECTORY {
+		var returnPages []Page
+		for _, subPage := range p.subPages {
+			if subPage.isType == DIRECTORY {
+				returnPages = append(returnPages, subPage)
+			}
+		}
+		return returnPages, nil
+	} else {
+		return nil, errors.New(fmt.Sprintf("%s no tiene subDirectorios", p.filePath))
 	}
-	return p.id
+}
+func (p *Page) GetSubPages() ([]Page, error) {
+	if p.isType == DIRECTORY {
+		var returnPages []Page
+		for _, subPage := range p.subPages {
+			if subPage.isType == PAGE {
+				returnPages = append(returnPages, subPage)
+			}
+		}
+		return returnPages, nil
+	} else {
+		return nil, errors.New(fmt.Sprintf("%s no tiene subPáginas", p.filePath))
+	}
 }
 
-type pageFile struct {
-	page
-	extension string
-}
-
-type pageDir struct {
-	page
-	dirList   []pageDir
-	pagesList []pageFile
-}
-
-func (p pageDir) PagesList() []pageFile {
-	return p.pagesList
-}
-func (p pageDir) DirList() []pageDir {
-	return p.dirList
-}
-
-func GeneratePagesTree(dirname string) pageDir {
-	files, err := ioutil.ReadDir(dirname)
+// ReadDirectory recibe la ruta al directorio relativa a working directory y devuelve un Page
+//completo listo para servir en un HandleFunc
+func ReadDirectory(dirName string) (Page, error) {
+	files, err := ioutil.ReadDir(dirName)
 	if err != nil {
-		log.Fatal(err)
+		return Page{}, err
 	}
-	dir := pageDir{
-		page: page{
-			route:  dirname,
-			isType: DIRECTORY,
-			base:   filepath.Base(dirname),
-		},
-		dirList:   make([]pageDir, 0),
-		pagesList: make([]pageFile, 0),
+
+	dir := Page{
+		webPath:  dirName,
+		filePath: dirName,
+		isType:   DIRECTORY,
 	}
+
 	for _, file := range files {
-
 		if file.IsDir() {
-			dir.dirList = append(
-				dir.dirList, GeneratePagesTree(filepath.Join(dirname, file.Name())),
-			)
-
+			subDir, errDir := ReadDirectory(filepath.Join(dir.filePath, file.Name()))
+			if errDir != nil {
+				return Page{}, errDir
+			}
+			dir.subPages = append(dir.subPages, subDir)
 		} else {
-			dir.pagesList = append(
-				dir.pagesList, GeneratePage(file, filepath.Join(dirname, file.Name())),
-			)
+			subPage, errPage := ReadPageFile(file, filepath.Join(dir.filePath, file.Name()))
+			if errPage != nil {
+				return Page{}, errPage
+			}
+			dir.subPages = append(dir.subPages, subPage)
 		}
 	}
-
-	return dir
+	return dir, nil
 }
 
-func GeneratePage(f fs.FileInfo, dirname string) pageFile {
-	return pageFile{
-		page: page{
-			route:   dirname,
-			isType:  PAGE,
-			base:    filepath.Base(dirname),
-			webName: strings.TrimSuffix("/"+dirname, filepath.Ext(f.Name())),
-		},
-		extension: filepath.Ext(f.Name()),
+func ReadPageFile(f fs.FileInfo, dirName string) (Page, error) {
+	if f.IsDir() {
+		return Page{}, errors.New(
+			fmt.Sprintf(
+				"%s es un directorio, ReadPageFile requiere un archivo",
+				f.Name(),
+			),
+		)
 	}
+
+	return Page{
+		webPath:  strings.TrimSuffix(dirName, filepath.Ext(dirName)),
+		filePath: dirName,
+		isType:   PAGE,
+	}, nil
 }
 
+/*
 func HandleTree(dir *pageDir) {
 	HandleDir(dir)
 	for i := 0; i < len(dir.dirList); i++ {
@@ -128,7 +147,8 @@ func HandleDir(dir *pageDir) {
 	HandleFunc(
 		"/"+dir.route+"/", func(w http.ResponseWriter, r *http.Request) {
 			if dir.data == nil {
-				t, err := template.New("list").Parse(`<section class="content"><h3>{{ .Base }}</h3>
+				t, err := template.New("list").Parse(
+					`<section class="content"><h3>{{ .Base }}</h3>
 					{{range .DirList}}
 						<button hx-post="{{ .Route }}"
 								hx-trigger="click"
@@ -147,7 +167,8 @@ func HandleDir(dir *pageDir) {
 						</button>
 						<article id="content_{{ .HtmlId }}" class="card"></article>
 					{{end}}
-					</section>`)
+					</section>`,
+				)
 				if err != nil {
 					panic(err)
 				}
@@ -183,3 +204,4 @@ func HandlePage(p *pageFile) {
 		},
 	)
 }
+*/
