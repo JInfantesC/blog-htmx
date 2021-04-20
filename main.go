@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"embed"
+	"flag"
 	"fmt"
 	"html/template"
 	"io"
@@ -18,7 +19,9 @@ var static embed.FS
 var templates embed.FS
 
 func main() {
-	pagesDir, err := ReadDirectory("pages")
+	pageDirectory := getPageDirectoryFlag()
+
+	pagesDir, err := ReadDirectory(pageDirectory)
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -61,4 +64,12 @@ func verbosePrintPage(wr io.Writer, p *Page) {
 	for _, subPage := range p.SubPages {
 		verbosePrintPage(wr, &subPage)
 	}
+}
+
+func getPageDirectoryFlag() string {
+	var dir string
+	flag.StringVar(&dir, "dir", "pages", "Dirección del directorio a servir")
+
+	flag.Parse()
+	return dir
 }
