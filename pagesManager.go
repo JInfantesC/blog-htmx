@@ -31,16 +31,13 @@ const (
 
 /*Page baseType*/
 type Page struct {
-	webPath      string   // Ruta o pattern donde se ejecutará en el servidor
+	WebPath      string   // Ruta o pattern donde se ejecutará en el servidor
 	filePath     string   // Ruta física en el sistema de archivos
 	isType       PageType // Tipo de Page
 	bufferedData []byte   // Tras primera lectura. []byte a enviar por el servidor
 	SubPages     []Page   // Listado de sub páginas de este Page
 }
 
-func (p Page) GetRoute() string {
-	return p.webPath
-}
 func (p Page) GetExtension() string {
 	if p.GetType() == PAGE {
 		return filepath.Ext(p.GetFileName())
@@ -55,7 +52,7 @@ func (p Page) GetType() PageType {
 }
 func (p Page) String() string {
 	return fmt.Sprintf(
-		"%s\t%s\t%s", p.GetType(), p.webPath, p.filePath,
+		"%s\t%s\t%s", p.GetType(), p.WebPath, p.filePath,
 	)
 }
 
@@ -93,7 +90,7 @@ func ReadDirectory(dirName string) (Page, error) {
 	}
 
 	dir := Page{
-		webPath:  "/" + dirName,
+		WebPath:  "/" + dirName,
 		filePath: dirName,
 		isType:   DIRECTORY,
 	}
@@ -127,7 +124,7 @@ func ReadPageFile(f fs.FileInfo, dirName string) (Page, error) {
 	}
 
 	return Page{
-		webPath:  "/" + strings.TrimSuffix(dirName, filepath.Ext(dirName)),
+		WebPath:  "/" + strings.TrimSuffix(dirName, filepath.Ext(dirName)),
 		filePath: dirName,
 		isType:   PAGE,
 	}, nil
@@ -165,7 +162,7 @@ func HandlePage(p *Page) error {
 		return errors.New("imposible manejar Page. No es una página válida")
 	}
 	HandleFunc(
-		p.webPath, func(w http.ResponseWriter, r *http.Request) {
+		p.WebPath, func(w http.ResponseWriter, r *http.Request) {
 			if p.bufferedData == nil {
 				data, err := ioutil.ReadFile(p.filePath)
 				if err != nil {

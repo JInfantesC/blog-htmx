@@ -1,8 +1,7 @@
-# blog-htmx
-Programa para probar https://htmx.org/ junto a Go.
+# go-web-server
+Programa para probar un servidor de páginas utilizando distintos paquetes y técnicas de Go.
 
-El programa tiene un gestor automático de páginas que permite incluir archivos en la carpeta 
-`pages` y servirlos `localhost:8080\pages\` 
+El programa tiene un gestor automático de páginas que permite incluir archivos en la carpeta `pages` y servirlos `localhost:8080\pages\` 
 
 ## Como usar
 

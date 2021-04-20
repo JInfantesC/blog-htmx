@@ -1,4 +1,4 @@
-module blog-htmx
+module go-web-server
 
 go 1.16
 

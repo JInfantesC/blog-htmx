@@ -26,9 +26,9 @@ func main() {
 
 	HandlePage(
 		&Page{
-			webPath:      "/",
+			WebPath:      "/",
 			isType:       PAGE,
-			bufferedData: loadTemplate("templates/index.gohtml", pagesDir),
+			bufferedData: loadTemplate("templates/index-htmx.gohtml", pagesDir),
 		},
 	)
 	HandleDirectory(&pagesDir)

@@ -1,4 +1,4 @@
-{{- /*gotype: blog-htmx.Page*/ -}}
+{{- /*gotype: go-web-server.Page*/ -}}
 {{ define "directory" }}
     <div>
         <span class="label">{{.GetFileName}}</span>
@@ -6,7 +6,7 @@
             {{range .SubPages}}
                 {{if (eq .GetType 0)}}
                     <button class="pseudo"
-                            hx-get="{{.GetRoute}}"
+                            hx-get="{{.WebPath}}"
                             hx-trigger="click"
                             hx-target="#content"
                             hx-swap="innerHTML">
@@ -25,7 +25,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>blog-htmx - Made with Go & htmx</title>
+    <title>go-web-server</title>
 
     <link rel="stylesheet" href="static/picnic.min.css">
     <style>
@@ -37,15 +37,11 @@
         aside div {
             padding-left: 0.3em;
         }
-
-        aside label {
-
-        }
     </style>
 </head>
 <body>
 <main>
-    <h1>Blog-HTMX</h1>
+    <h1>go-web-server</h1>
     <section class="flex five">
         <aside class="card">
             {{ template "directory" . }}
@@ -58,8 +54,5 @@
 </main>
 
 <script src="static/htmx.min.js"></script>
-<script>
-	var tree ={{ . }}
-</script>
 </body>
 </html>
