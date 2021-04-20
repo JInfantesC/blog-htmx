@@ -27,6 +27,7 @@ func (pt PageType) String() string {
 const (
 	PAGE PageType = iota
 	DIRECTORY
+	HIDDEN
 )
 
 /*Page baseType*/
@@ -94,7 +95,10 @@ func ReadDirectory(dirName string) (Page, error) {
 		filePath: dirName,
 		isType:   DIRECTORY,
 	}
-
+	// Detectar si está oculto
+	if f := filepath.Base(dirName); f[:1] == "." {
+		dir.isType = HIDDEN
+	}
 	for _, file := range files {
 		if file.IsDir() {
 			subDir, errDir := ReadDirectory(filepath.Join(dir.filePath, file.Name()))
@@ -122,12 +126,16 @@ func ReadPageFile(f fs.FileInfo, dirName string) (Page, error) {
 			),
 		)
 	}
-
-	return Page{
+	p := Page{
 		WebPath:  "/" + strings.TrimSuffix(dirName, filepath.Ext(dirName)),
 		filePath: dirName,
 		isType:   PAGE,
-	}, nil
+	}
+	// Detectar si está oculto
+	if f := filepath.Base(dirName); f[:1] == "." {
+		p.isType = HIDDEN
+	}
+	return p, nil
 }
 
 // HandleDirectory recorre recursivamente Page y todos los Page.
